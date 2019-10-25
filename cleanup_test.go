@@ -9,9 +9,9 @@ import (
 func TestParse(t *testing.T) {
 	t.Run("see if we can parse output correctly", func(t *testing.T) {
 		fBytes, _ := ioutil.ReadFile("k_output.json")
-		result := GetLabels(fBytes)
-		if result["app"] == "" {
-			t.Fatal("Could not parse json")
+		result := GetLabels(fBytes, "app")
+		if result["m3db"] == nil {
+			t.Errorf("could not parse kubectl output")
 		}
 	})
 
