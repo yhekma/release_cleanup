@@ -23,7 +23,7 @@ func TestParse(t *testing.T) {
 `)
 		trackTime, _ := time.Parse(HelmTimeLayout, "Tue Oct 22 22:45:51 2019")
 		ukBookingTime, _ := time.Parse(HelmTimeLayout, "Thu Oct 17 09:13:16 2019")
-		dates := map[string]time.Time{
+		dates := DeployDates{
 			"track-if2nova-grpc": trackTime,
 			"uk-booking-service": ukBookingTime,
 		}

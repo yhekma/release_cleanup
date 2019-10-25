@@ -9,6 +9,7 @@ import (
 const HelmTimeLayout = "Tue Oct 22 22:45:51 2019"
 
 type RawJson map[string]interface{}
+type DeployDates map[string]time.Time
 
 func GetLabels(b []byte) map[string]string {
 	result := RawJson{}
@@ -30,8 +31,8 @@ func GetLabels(b []byte) map[string]string {
 	return labels
 }
 
-func GetDeployDates(b []byte) map[string]time.Time {
-	result := map[string]time.Time{}
+func GetDeployDates(b []byte) DeployDates {
+	result := DeployDates{}
 	splittedStringLines := strings.Split(string(b), "\n")
 	for _, l := range splittedStringLines {
 		if l == "" {
