@@ -8,7 +8,7 @@ import (
 
 const HelmTimeLayout = "Tue Oct 22 22:45:51 2019"
 
-type RawJson map[string]interface{}
+type rawJson map[string]interface{}
 type DeployDates map[string]time.Time
 type ReleaseLabels map[string]map[string]string
 
@@ -16,7 +16,7 @@ func GetLabels(b []byte, filter string) ReleaseLabels {
 	// filter is key that needs to exist in labels
 	// Return will look like
 	// {m3db: {"app": "m3db-node", "controller-revision": "bla" }}
-	rjson := RawJson{}
+	rjson := rawJson{}
 	labels := ReleaseLabels{}
 	_ = json.Unmarshal(b, &rjson)
 
