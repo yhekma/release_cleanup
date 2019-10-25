@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const HelmTimeLayout = "Tue Oct 22 22:45:51 2019"
+const HelmTimeLayout = "Mon Jan 02 15:04:05 2006"
 
 type rawJson map[string]interface{}
 type DeployDates map[string]time.Time
@@ -47,13 +47,26 @@ func GetDeployDates(b []byte) DeployDates {
 			continue
 		}
 		splittedString := strings.Split(l, "\t")
-		name := strings.TrimSpace(splittedString[0])
+		name := strings.TrimSpace(splittedString[2])
 		if name == "NAME" {
 			continue
 		}
-		stringTime := strings.TrimSpace(splittedString[2])
+		stringTime := strings.TrimSpace(splittedString[4])
 		parsedTime, _ := time.Parse(HelmTimeLayout, stringTime)
 		result[name] = parsedTime
 	}
+	return result
+}
+
+func GetOlderReleases(dates DeployDates, days int) []string {
+	now := time.Now()
+	var result []string
+	for deploy, date := range dates {
+		targetDate := date.AddDate(0, 0, days)
+		if now.After(targetDate) {
+			result = append(result, deploy)
+		}
+	}
+
 	return result
 }
