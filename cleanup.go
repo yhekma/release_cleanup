@@ -43,9 +43,9 @@ func GetDeployDates(b []byte) DeployDates {
 		if name == "NAME" {
 			continue
 		}
-		stime := strings.TrimSpace(splittedString[2])
-		time, _ := time.Parse(HelmTimeLayout, stime)
-		result[name] = time
+		stringTime := strings.TrimSpace(splittedString[2])
+		parsedTime, _ := time.Parse(HelmTimeLayout, stringTime)
+		result[name] = parsedTime
 	}
 	return result
 }
