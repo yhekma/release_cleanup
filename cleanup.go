@@ -23,7 +23,7 @@ type kubeResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingPods(b []byte, filter string) []string {
+func GetMatchingReleases(b []byte, filter string) []string {
 	rjson := kubeResponse{}
 	var result []string
 	err := json.Unmarshal(b, &rjson)
@@ -32,7 +32,8 @@ func GetMatchingPods(b []byte, filter string) []string {
 	}
 
 	for _, v := range rjson.Items {
-		if v.Metadata.Labels[filter] == nil {
+		labels := v.Metadata.Labels
+		if labels[filter] == nil || strings.Index(labels["release"].(string), "ingress") != -1 {
 			continue
 		}
 		result = append(result, v.Metadata.Labels["release"].(string))
@@ -114,7 +115,7 @@ func main() {
 	kubeOutput := GetKubeOutput(*namespace)
 	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
-	matchingPods := GetMatchingPods(kubeOutput, *filter)
+	matchingPods := GetMatchingReleases(kubeOutput, *filter)
 	releasesToBeConsidered := GetOlderReleases(deployDates, *age)
 	for _, release := range releasesToBeConsidered {
 		if Contains(matchingPods, release) {

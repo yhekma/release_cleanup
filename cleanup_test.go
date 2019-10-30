@@ -16,7 +16,7 @@ func TestParse(t *testing.T) {
 
 	t.Run("see if we can find matching pods", func(t *testing.T) {
 		fBytes, _ := ioutil.ReadFile("k_output.json")
-		result := GetMatchingPods(fBytes, "app")
+		result := GetMatchingReleases(fBytes, "app")
 		if !Contains(result, "m3db") {
 			t.Errorf("expected item ('m3db') does not appear in output")
 		}
@@ -24,7 +24,7 @@ func TestParse(t *testing.T) {
 
 	t.Run("see if we can find non matching pods", func(t *testing.T) {
 		fBytes, _ := ioutil.ReadFile("k_output.json")
-		result := GetMatchingPods(fBytes, "xxx")
+		result := GetMatchingReleases(fBytes, "xxx")
 		if len(result) > 0 {
 			t.Errorf("found too many matching pods")
 		}
