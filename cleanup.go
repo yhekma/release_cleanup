@@ -13,28 +13,34 @@ import (
 
 const HelmTimeLayout = "Mon Jan 02 15:04:05 2006"
 
-type rawJson map[string]interface{}
+type kubeResponse struct {
+	Items []kubeResponseItems `json:"items"`
+}
+
+type kubeResponseItems struct {
+	Metadata kubeResponseMetadata `json:"metadata"`
+}
+
+type kubeResponseMetadata struct {
+	Labels map[string]interface{} `json:"labels"`
+}
+
 type DeployDates map[string]time.Time
 
 func GetMatchingPods(b []byte, filter string) []string {
-	rjson := rawJson{}
+	rjson := kubeResponse{}
 	var result []string
 	err := json.Unmarshal(b, &rjson)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	items := rjson["items"].([]interface{})
-	for _, v := range items {
-		item := v.(map[string]interface{})
-		metadata := item["metadata"].(map[string]interface{})
-		labels := metadata["labels"].(map[string]interface{})
-		if labels[filter] == nil {
+	for _, v := range rjson.Items {
+		if v.Metadata.Labels[filter] == nil {
 			continue
 		}
-		result = append(result, labels["release"].(string))
+		result = append(result, v.Metadata.Labels["release"].(string))
 	}
-
 	return result
 }
 
@@ -107,8 +113,9 @@ func Contains(s []string, item string) bool {
 func main() {
 	filter := flag.String("filter", "tbc", "only look for pods with this label set")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
+	namespace := flag.String("namespace", "mytnt2", "namespace to check")
 	flag.Parse()
-	kubeOutput := GetKubeOutput("mytnt2")
+	kubeOutput := GetKubeOutput(*namespace)
 	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
 	matchingPods := GetMatchingPods(kubeOutput, *filter)
