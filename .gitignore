@@ -1,2 +1,3 @@
-/go_build_
-/depl_cleanup
+
+cleanup
+k_output.json

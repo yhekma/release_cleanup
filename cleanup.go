@@ -24,14 +24,14 @@ type kubeResponse struct {
 type DeployDates map[string]time.Time
 
 func GetMatchingReleases(b []byte, filter string) []string {
-	rjson := kubeResponse{}
+	response := kubeResponse{}
 	var result []string
-	err := json.Unmarshal(b, &rjson)
+	err := json.Unmarshal(b, &response)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, v := range rjson.Items {
+	for _, v := range response.Items {
 		labels := v.Metadata.Labels
 		if labels[filter] == nil || strings.Index(labels["release"].(string), "ingress") != -1 {
 			continue
