@@ -14,15 +14,11 @@ import (
 const HelmTimeLayout = "Mon Jan 02 15:04:05 2006"
 
 type kubeResponse struct {
-	Items []kubeResponseItems `json:"items"`
-}
-
-type kubeResponseItems struct {
-	Metadata kubeResponseMetadata `json:"metadata"`
-}
-
-type kubeResponseMetadata struct {
-	Labels map[string]interface{} `json:"labels"`
+	Items []struct {
+		Metadata struct {
+			Labels map[string]interface{} `json:"labels"`
+		} `json:"metadata"`
+	} `json:"items"`
 }
 
 type DeployDates map[string]time.Time
