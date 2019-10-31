@@ -87,7 +87,7 @@ func getOutput(cmd *exec.Cmd) []byte {
 }
 
 func GetKubeOutput(namespace string) []byte {
-	cmd := exec.Command("kubectl", "get", "pods", "-o", "json", "-n", namespace)
+	cmd := exec.Command("kubectl", "get", "deployments", "-o", "json", "-n", namespace)
 	result := getOutput(cmd)
 	return result
 }
