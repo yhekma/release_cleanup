@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const HelmTimeLayout = "Mon Jan 02 15:04:05 2006"
+const HelmTimeLayout = "Mon Jan 2 15:04:05 2006"
 
 type kubeResponse struct {
 	Items []struct {
