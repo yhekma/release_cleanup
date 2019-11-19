@@ -86,14 +86,14 @@ func getOutput(cmd *exec.Cmd) []byte {
 	return output.Bytes()
 }
 
-func GetKubeOutput(namespace string) []byte {
-	cmd := exec.Command("kubectl", "get", "deployments", "-o", "json", "-n", namespace)
+func GetKubeOutput(namespace, kubeconfig string) []byte {
+	cmd := exec.Command("kubectl", "--kubeconfig", kubeconfig, "get", "deployments", "-o", "json", "-n", namespace)
 	result := getOutput(cmd)
 	return result
 }
 
-func GetHelmOutput() []byte {
-	cmd := exec.Command("helm", "list", "--all")
+func GetHelmOutput(kubeconfig string) []byte {
+	cmd := exec.Command("helm", "--kubeconfig", kubeconfig, "list", "--all")
 	result := getOutput(cmd)
 	return result
 }
@@ -111,9 +111,10 @@ func main() {
 	filter := flag.String("filter", "tbc", "only look for pods with this label set")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
+	kubeconfig := flag.String("kubeconfig", "/tmp/config/kubeconfig", "kubeconfig file to use")
 	flag.Parse()
-	kubeOutput := GetKubeOutput(*namespace)
-	helmOutput := GetHelmOutput()
+	kubeOutput := GetKubeOutput(*namespace, *kubeconfig)
+	helmOutput := GetHelmOutput(*kubeconfig)
 	deployDates := GetDeployDates(helmOutput)
 	matchingPods := GetMatchingReleases(kubeOutput, *filter)
 	releasesToBeConsidered := GetOlderReleases(deployDates, *age)
