@@ -86,16 +86,26 @@ func getOutput(cmd *exec.Cmd) []byte {
 	return output.Bytes()
 }
 
-func GetKubeOutput(namespace, kubeconfig string) []byte {
-	cmd := exec.Command("kubectl", "--kubeconfig", kubeconfig, "get", "deployments", "-o", "json", "-n", namespace)
+func GetKubeOutput(namespace string) []byte {
+	cmd := exec.Command("kubectl", "get", "deployments", "-o", "json", "-n", namespace)
 	result := getOutput(cmd)
 	return result
 }
 
-func GetHelmOutput(kubeconfig string) []byte {
-	cmd := exec.Command("helm", "--kubeconfig", kubeconfig, "list", "--all")
+func GetHelmOutput() []byte {
+	cmd := exec.Command("helm", "list", "--all")
 	result := getOutput(cmd)
 	return result
+}
+
+func deleteReleases(releases []string, pretend bool) []byte {
+	var cmd *exec.Cmd
+	if pretend {
+		cmd = exec.Command("echo", "pretend", "helm", "delete", "--purge", strings.Join(releases, " "))
+	} else {
+		cmd = exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
+	}
+	return getOutput(cmd)
 }
 
 func Contains(s []string, item string) bool {
@@ -107,20 +117,29 @@ func Contains(s []string, item string) bool {
 	return false
 }
 
+// This is fairly slow and naive, but we are not dealing with large slices here (think 100s tops), so readability before scalability
+func intersect(slice1, slice2 []string) []string {
+	var result []string
+	for _, i := range slice1 {
+		if Contains(slice2, i) {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
 func main() {
 	filter := flag.String("filter", "tbc", "only look for pods with this label set")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
-	kubeconfig := flag.String("kubeconfig", "/tmp/config/kubeconfig", "kubeconfig file to use")
+	pretend := flag.Bool("pretend", false, "run in pretend mode")
 	flag.Parse()
-	kubeOutput := GetKubeOutput(*namespace, *kubeconfig)
-	helmOutput := GetHelmOutput(*kubeconfig)
+	kubeOutput := GetKubeOutput(*namespace)
+	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
-	matchingPods := GetMatchingReleases(kubeOutput, *filter)
-	releasesToBeConsidered := GetOlderReleases(deployDates, *age)
-	for _, release := range releasesToBeConsidered {
-		if Contains(matchingPods, release) {
-			fmt.Println(release)
-		}
-	}
+	matchingReleases := GetMatchingReleases(kubeOutput, *filter)
+	oldReleases := GetOlderReleases(deployDates, *age)
+	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
+	result := deleteReleases(releasesToBeDeleted, *pretend)
+	fmt.Println(string(result))
 }
