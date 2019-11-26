@@ -23,7 +23,7 @@ type kubeResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, filter string) []string {
+func GetMatchingReleases(b []byte, filter string, excludes []string) []string {
 	response := kubeResponse{}
 	var result []string
 	err := json.Unmarshal(b, &response)
@@ -33,10 +33,14 @@ func GetMatchingReleases(b []byte, filter string) []string {
 
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
-		if labels[filter] == nil || strings.Index(labels["release"].(string), "ingress") != -1 {
+		release := labels["release"].(string)
+		if labels[filter] == nil || strings.Index(release, "ingress") != -1 {
 			continue
 		}
-		result = append(result, v.Metadata.Labels["release"].(string))
+		if Contains(excludes, release) {
+			continue
+		}
+		result = append(result, release)
 	}
 	return result
 }
@@ -133,11 +137,13 @@ func main() {
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
 	pretend := flag.Bool("pretend", false, "run in pretend mode")
+	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
 	flag.Parse()
+	excludes := strings.Split(*exclude, ",")
 	kubeOutput := GetKubeOutput(*namespace)
 	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
-	matchingReleases := GetMatchingReleases(kubeOutput, *filter)
+	matchingReleases := GetMatchingReleases(kubeOutput, *filter, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
 	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
 	result := deleteReleases(releasesToBeDeleted, *pretend)
