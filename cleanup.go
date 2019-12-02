@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -35,12 +36,20 @@ func GetMatchingReleases(b []byte, filter string, excludes []string) []string {
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
 		release := labels["release"].(string)
+
 		if labels[filter] == nil || strings.Index(release, "ingress") != -1 {
 			continue
 		}
+
 		if Contains(excludes, release) {
 			continue
 		}
+
+		matched, _ := regexp.MatchString(`(uat|preprod|dev|develop|test)$`, release)
+		if matched {
+			continue
+		}
+
 		result = append(result, release)
 	}
 	return result
