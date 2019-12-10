@@ -2,7 +2,7 @@ FROM golang:alpine3.10 as builder
 RUN mkdir /build
 WORKDIR /build
 RUN apk update && apk add curl
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.5/bin/linux/amd64/kubectl
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.15.5/bin/linux/amd64/kubectl
 RUN curl -LO https://get.helm.sh/helm-v2.13.1-linux-amd64.tar.gz
 RUN tar xzf helm*.tar.gz
 RUN chmod a+x kubectl linux-amd64/helm
