@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -148,12 +149,21 @@ func main() {
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
 	pretend := flag.Bool("pretend", false, "run in pretend mode")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
-	// Test if we can read kubeconfig
+
+	// Test if we can read provided kubeconfig
 	kubeConfig := os.Getenv("KUBECONFIG")
 	_, err := os.Open(kubeConfig)
 	if err != nil {
-		fmt.Printf("Could not read kubeconfig: %v\n", err)
+		// See if we can read the default kubeconfig
+		homeDir := os.Getenv("HOME")
+		_, err := os.Open(path.Join(homeDir, ".kube", "config"))
+		// Error out
+		if err != nil {
+			fmt.Printf("Could not read kubeconfig %s: %v\n", kubeConfig, err)
+			os.Exit(1)
+		}
 	}
+
 	flag.Parse()
 	excludes := strings.Split(*exclude, ",")
 	kubeOutput := GetKubeOutput(*namespace)
