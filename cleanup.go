@@ -156,11 +156,10 @@ func main() {
 	if err != nil {
 		// See if we can read the default kubeconfig
 		homeDir := os.Getenv("HOME")
-		_, err := os.Open(path.Join(homeDir, ".kube", "config"))
+		_, err := os.Open(path.Join(homeDir, ".kube2", "config"))
 		// Error out
 		if err != nil {
-			fmt.Printf("Could not read kubeconfig %s: %v\n", kubeConfig, err)
-			os.Exit(1)
+			log.Fatalf("Could not read kubeconfig:\n\t%v\n", err)
 		}
 	}
 
