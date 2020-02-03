@@ -26,7 +26,7 @@ type kubeResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, filter string, excludes []string) []string {
+func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) []string {
 	response := kubeResponse{}
 	var result []string
 	err := json.Unmarshal(b, &response)
@@ -38,7 +38,11 @@ func GetMatchingReleases(b []byte, filter string, excludes []string) []string {
 		labels := v.Metadata.Labels
 		release := labels["release"].(string)
 
-		if labels[filter] == nil || strings.Index(release, "ingress") != -1 {
+		if labels["branch"] == nil {
+			continue
+		}
+
+		if Contains(ignoreBranches, labels["branch"].(string)) == true {
 			continue
 		}
 
@@ -144,7 +148,7 @@ func intersect(slice1, slice2 []string) []string {
 }
 
 func main() {
-	filter := flag.String("filter", "tbc", "only look for pods with this label set")
+	fignoreBranches := flag.String("ignoreBranches", "master", "comma-separated list of branches to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
 	pretend := flag.Bool("pretend", false, "run in pretend mode")
@@ -156,7 +160,7 @@ func main() {
 	if err != nil {
 		// See if we can read the default kubeconfig
 		homeDir := os.Getenv("HOME")
-		_, err := os.Open(path.Join(homeDir, ".kube2", "config"))
+		_, err := os.Open(path.Join(homeDir, ".kube", "config"))
 		// Error out
 		if err != nil {
 			log.Fatalf("Could not read kubeconfig:\n\t%v\n", err)
@@ -164,11 +168,12 @@ func main() {
 	}
 
 	flag.Parse()
+	ignoreBranches := strings.Split(*fignoreBranches, ",")
 	excludes := strings.Split(*exclude, ",")
 	kubeOutput := GetKubeOutput(*namespace)
 	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
-	matchingReleases := GetMatchingReleases(kubeOutput, *filter, excludes)
+	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
 	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
 	result := deleteReleases(releasesToBeDeleted, *pretend)
