@@ -6,7 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -23,7 +26,7 @@ type kubeResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, filter string) []string {
+func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) []string {
 	response := kubeResponse{}
 	var result []string
 	err := json.Unmarshal(b, &response)
@@ -33,10 +36,26 @@ func GetMatchingReleases(b []byte, filter string) []string {
 
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
-		if labels[filter] == nil || strings.Index(labels["release"].(string), "ingress") != -1 {
+		release := labels["release"].(string)
+
+		if labels["branch"] == nil {
 			continue
 		}
-		result = append(result, v.Metadata.Labels["release"].(string))
+
+		if Contains(ignoreBranches, labels["branch"].(string)) == true {
+			continue
+		}
+
+		if Contains(excludes, release) {
+			continue
+		}
+
+		matched, _ := regexp.MatchString(`(uat|preprod|dev|develop|test)$`, release)
+		if matched {
+			continue
+		}
+
+		result = append(result, release)
 	}
 	return result
 }
@@ -98,6 +117,16 @@ func GetHelmOutput() []byte {
 	return result
 }
 
+func deleteReleases(releases []string, pretend bool) []byte {
+	var cmd *exec.Cmd
+	if pretend {
+		cmd = exec.Command("echo", "pretend", "helm", "delete", "--purge", strings.Join(releases, " "))
+	} else {
+		cmd = exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
+	}
+	return getOutput(cmd)
+}
+
 func Contains(s []string, item string) bool {
 	for _, i := range s {
 		if i == item {
@@ -107,19 +136,46 @@ func Contains(s []string, item string) bool {
 	return false
 }
 
+// This is fairly slow and naive, but we are not dealing with large slices here (think 100s tops), so readability before scalability
+func intersect(slice1, slice2 []string) []string {
+	var result []string
+	for _, i := range slice1 {
+		if Contains(slice2, i) {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
 func main() {
-	filter := flag.String("filter", "tbc", "only look for pods with this label set")
+	fignoreBranches := flag.String("ignoreBranches", "master", "comma-separated list of branches to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
+	pretend := flag.Bool("pretend", false, "run in pretend mode")
+	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
+
+	// Test if we can read provided kubeconfig
+	kubeConfig := os.Getenv("KUBECONFIG")
+	_, err := os.Open(kubeConfig)
+	if err != nil {
+		// See if we can read the default kubeconfig
+		homeDir := os.Getenv("HOME")
+		_, err := os.Open(path.Join(homeDir, ".kube", "config"))
+		// Error out
+		if err != nil {
+			log.Fatalf("Could not read kubeconfig:\n\t%v\n", err)
+		}
+	}
+
 	flag.Parse()
+	ignoreBranches := strings.Split(*fignoreBranches, ",")
+	excludes := strings.Split(*exclude, ",")
 	kubeOutput := GetKubeOutput(*namespace)
 	helmOutput := GetHelmOutput()
 	deployDates := GetDeployDates(helmOutput)
-	matchingPods := GetMatchingReleases(kubeOutput, *filter)
-	releasesToBeConsidered := GetOlderReleases(deployDates, *age)
-	for _, release := range releasesToBeConsidered {
-		if Contains(matchingPods, release) {
-			fmt.Println(release)
-		}
-	}
+	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
+	oldReleases := GetOlderReleases(deployDates, *age)
+	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
+	result := deleteReleases(releasesToBeDeleted, *pretend)
+	fmt.Println(string(result))
 }

@@ -1,0 +1,60 @@
+@Library('jenkins-pipeline-library@cicd-v1') _
+
+pipeline {
+  agent none
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+    disableConcurrentBuilds()
+  }
+
+// Start Stages
+  stages {
+    stage('Prepare Environment') {
+      agent any
+      steps {
+        prepareEnvironment()
+      }
+    }
+
+    stage("Build Docker Image") {
+      options { skipDefaultCheckout() }
+      agent any
+      steps {
+        githubStatus('pending')
+        readVersion()
+        buildDocker()
+        tagDocker(BRANCH_NAME)
+      }
+    }
+
+    stage("Tag docker master") {
+      agent any
+      when {
+        expression { BRANCH_NAME ==~ /(master)/ }
+      }
+      steps {
+        tagDocker('latest')
+      }
+    }
+
+    stage("Publish Docker Image") {
+      options { skipDefaultCheckout() }
+      agent any
+      steps {
+        publishDocker(BRANCH_NAME)
+      }
+    }
+
+    stage("Publish docker master") {
+      options { skipDefaultCheckout() }
+      agent any
+      when {
+        expression { BRANCH_NAME ==~ /(master)/ }
+      }
+      steps {
+        // for compatibility with any old things who can use 'latest' instead 'master'
+        publishDocker('latest')
+      }
+    }
+  } // ENd Of Stages
+}
