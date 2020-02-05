@@ -148,7 +148,7 @@ func intersect(slice1, slice2 []string) []string {
 }
 
 func main() {
-	fignoreBranches := flag.String("ignoreBranches", "master", "comma-separated list of branches to ignore")
+	fignoreBranches := flag.String("ignoreBranches", "master,preprod,dev,uat,develop", "comma-separated list of branches to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "mytnt2", "namespace to check")
 	pretend := flag.Bool("pretend", false, "run in pretend mode")
