@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -47,11 +46,6 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) [
 		}
 
 		if Contains(excludes, release) {
-			continue
-		}
-
-		matched, _ := regexp.MatchString(`(uat|preprod|dev|develop|test)$`, release)
-		if matched {
 			continue
 		}
 
