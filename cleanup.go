@@ -35,6 +35,11 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) [
 
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
+
+		if labels["release"] == nil {
+			continue
+		}
+
 		release := labels["release"].(string)
 
 		if labels["branch"] == nil {
@@ -100,7 +105,12 @@ func getOutput(cmd *exec.Cmd) []byte {
 }
 
 func GetKubeOutput(namespace string) []byte {
-	cmd := exec.Command("kubectl", "get", "deployments", "-o", "json", "-n", namespace)
+	var cmd *exec.Cmd
+	if namespace == "" {
+		cmd = exec.Command("kubectl", "get", "deployments", "-o", "json", "--all-namespaces")
+	} else {
+		cmd = exec.Command("kubectl", "get", "deployments", "-o", "json", "-n", namespace)
+	}
 	result := getOutput(cmd)
 	return result
 }
@@ -144,7 +154,7 @@ func intersect(slice1, slice2 []string) []string {
 func main() {
 	fignoreBranches := flag.String("ignoreBranches", "master,preprod,dev,uat,develop", "comma-separated list of branches to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
-	namespace := flag.String("namespace", "mytnt2", "namespace to check")
+	namespace := flag.String("namespace", "", "namespace to check")
 	pretend := flag.Bool("pretend", false, "run in pretend mode")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
 
