@@ -121,13 +121,8 @@ func GetHelmOutput() []byte {
 	return result
 }
 
-func deleteReleases(releases []string, pretend bool) []byte {
-	var cmd *exec.Cmd
-	if pretend {
-		cmd = exec.Command("echo", "pretend", "helm", "delete", "--purge", strings.Join(releases, " "))
-	} else {
-		cmd = exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
-	}
+func deleteReleases(releases []string) []byte {
+	cmd := exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
 	return getOutput(cmd)
 }
 
@@ -155,7 +150,6 @@ func main() {
 	fignoreBranches := flag.String("ignoreBranches", "master,preprod,dev,uat,develop", "comma-separated list of branches to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "", "namespace to check")
-	pretend := flag.Bool("pretend", false, "run in pretend mode")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
 
 	// Test if we can read provided kubeconfig
@@ -180,6 +174,6 @@ func main() {
 	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
 	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
-	result := deleteReleases(releasesToBeDeleted, *pretend)
+	result := deleteReleases(releasesToBeDeleted)
 	fmt.Println(string(result))
 }
