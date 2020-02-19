@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -167,10 +168,30 @@ func main() {
 	}
 
 	flag.Parse()
+
+	var (
+		helmwg     sync.WaitGroup
+		kubewg     sync.WaitGroup
+		kubeOutput []byte
+		helmOutput []byte
+	)
+	helmwg.Add(1)
+	kubewg.Add(1)
+
 	ignoreBranches := strings.Split(*fignoreBranches, ",")
 	excludes := strings.Split(*exclude, ",")
-	kubeOutput := GetKubeOutput(*namespace)
-	helmOutput := GetHelmOutput()
+
+	go func(ns string, w *sync.WaitGroup) {
+		kubeOutput = GetKubeOutput(ns)
+		w.Done()
+	}(*namespace, &kubewg)
+	go func(w *sync.WaitGroup) {
+		helmOutput = GetHelmOutput()
+		w.Done()
+	}(&helmwg)
+	helmwg.Wait()
+	kubewg.Wait()
+
 	deployDates := GetDeployDates(helmOutput)
 	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
