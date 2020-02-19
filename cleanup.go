@@ -116,7 +116,7 @@ func GetKubeOutput(namespace string) []byte {
 }
 
 func GetHelmOutput() []byte {
-	cmd := exec.Command("helm", "list", "--all")
+	cmd := exec.Command("helm", "list")
 	result := getOutput(cmd)
 	return result
 }
