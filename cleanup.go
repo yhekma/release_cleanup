@@ -207,7 +207,7 @@ func main() {
 	result := deleteReleases(releasesToBeDeleted)
 	fmt.Println(string(result))
 	if *verbose {
-		fmt.Printf("\n%-58s BRANCH\n\n", "RELEASE")
+		fmt.Printf("\n%-58s BRANCH\n", "RELEASE")
 		for _, release := range releasesToBeDeleted {
 			fmt.Printf("%-50s --      %s\n", release, matchingReleases[release])
 		}
