@@ -26,9 +26,9 @@ type kubeResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) []string {
+func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) map[string]string {
 	response := kubeResponse{}
-	var result []string
+	result := make(map[string]string)
 	err := json.Unmarshal(b, &response)
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +55,7 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) [
 			continue
 		}
 
-		result = append(result, release)
+		result[release] = labels["branch"].(string)
 	}
 	return result
 }
@@ -153,6 +153,7 @@ func main() {
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "", "namespace to check")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
+	verbose := flag.Bool("verbose", false, "show branches of releases to be deleted")
 
 	// Test if we can read provided kubeconfig
 	kubeConfig := os.Getenv("KUBECONFIG")
@@ -195,7 +196,20 @@ func main() {
 	deployDates := GetDeployDates(helmOutput)
 	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
-	releasesToBeDeleted := intersect(oldReleases, matchingReleases)
+
+	// Get keys from matchingReleases map
+	matchingReleasesSlice := make([]string, 0, len(matchingReleases))
+	for k := range matchingReleases {
+		matchingReleasesSlice = append(matchingReleasesSlice, k)
+	}
+
+	releasesToBeDeleted := intersect(oldReleases, matchingReleasesSlice)
 	result := deleteReleases(releasesToBeDeleted)
 	fmt.Println(string(result))
+	if *verbose {
+		fmt.Printf("\n%-58s BRANCH\n\n", "RELEASE")
+		for _, release := range releasesToBeDeleted {
+			fmt.Printf("%-50s --      %s\n", release, matchingReleases[release])
+		}
+	}
 }
