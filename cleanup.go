@@ -207,9 +207,16 @@ func main() {
 	result := deleteReleases(releasesToBeDeleted)
 	fmt.Println(string(result))
 	if *verbose {
-		fmt.Printf("\n%-58s BRANCH\n", "RELEASE")
+		// Get longest string
+		var length int
+		for _, releaseString := range releasesToBeDeleted {
+			if len(releaseString) > length {
+				length = len(releaseString)
+			}
+		}
+		fmt.Printf("\n%-*s BRANCH\n", length+6, "RELEASE")
 		for _, release := range releasesToBeDeleted {
-			fmt.Printf("%-50s --      %s\n", release, matchingReleases[release])
+			fmt.Printf("%-*s  --  %s\n", length, release, matchingReleases[release])
 		}
 	}
 }
