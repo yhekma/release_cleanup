@@ -214,7 +214,7 @@ func main() {
 				length = len(releaseString)
 			}
 		}
-		fmt.Printf("\n%-*s BRANCH\n", length+6, "RELEASE")
+		fmt.Printf("\n%-*s BRANCH\n", length+5, "RELEASE")
 		for _, release := range releasesToBeDeleted {
 			fmt.Printf("%-*s  --  %s\n", length, release, matchingReleases[release])
 		}
