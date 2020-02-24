@@ -208,15 +208,22 @@ func main() {
 	fmt.Println(string(result))
 	if *verbose {
 		// Get longest string
-		var length int
+		var releaseLength int
+		var branchLength int
 		for _, releaseString := range releasesToBeDeleted {
-			if len(releaseString) > length {
-				length = len(releaseString)
+			if len(releaseString) > releaseLength {
+				releaseLength = len(releaseString)
 			}
 		}
-		fmt.Printf("\n%-*s BRANCH\n", length+5, "RELEASE")
 		for _, release := range releasesToBeDeleted {
-			fmt.Printf("%-*s  --  %s\n", length, release, matchingReleases[release])
+			if len(matchingReleases[release]) > branchLength {
+				branchLength = len(matchingReleases[release])
+			}
+		}
+
+		fmt.Printf("\n%-*s BRANCH %*s\n", releaseLength+5, "RELEASE", branchLength+8, "DEPLOY DATE")
+		for _, release := range releasesToBeDeleted {
+			fmt.Printf("%-*s  --  %-*s -- %s\n", releaseLength, release, branchLength, matchingReleases[release], deployDates[release])
 		}
 	}
 }
