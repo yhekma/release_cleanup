@@ -19,7 +19,7 @@ const HelmTimeLayout = "Mon Jan 2 15:04:05 2006"
 type kubeResponse struct {
 	Items []struct {
 		Metadata struct {
-			Labels map[string]interface{} `json:"labels"`
+			Labels map[string]string `json:"labels"`
 		} `json:"metadata"`
 	} `json:"items"`
 }
@@ -37,20 +37,21 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) m
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
 
-		if labels["release"] == nil {
+		// Disregard deployments that don't have "branch" or "release" in the labels
+		if _, ok := labels["release"]; !ok {
+			continue
+		}
+		if _, ok := labels["branch"]; !ok {
 			continue
 		}
 
-		release := labels["release"].(string)
 		switch {
-		case labels["branch"] == nil:
+		case Contains(ignoreBranches, labels["branch"]) == true:
 			continue
-		case Contains(ignoreBranches, labels["branch"].(string)) == true:
-			continue
-		case Contains(excludes, release):
+		case Contains(excludes, labels["release"]):
 			continue
 		default:
-			result[release] = labels["branch"].(string)
+			result[labels["release"]] = labels["branch"]
 		}
 	}
 	return result
