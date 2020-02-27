@@ -24,6 +24,13 @@ type kubeResponse struct {
 	} `json:"items"`
 }
 
+type helmResponse struct {
+	Releases []struct {
+		Name    string `json:"Name"`
+		Updated string `json:"Updated"`
+	} `json:"Releases"`
+}
+
 type DeployDates map[string]time.Time
 
 func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) map[string]string {
@@ -58,23 +65,15 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) m
 }
 
 func GetDeployDates(b []byte) DeployDates {
+	response := helmResponse{}
+	err := json.Unmarshal(b, &response)
+	if err != nil {
+		log.Fatal(err)
+	}
 	result := DeployDates{}
-	splittedStringLines := strings.Split(string(b), "\n")
-	for _, l := range splittedStringLines {
-		if l == "" {
-			continue
-		}
-		splittedString := strings.Split(l, "\t")
-		if len(splittedString) < 6 {
-			continue
-		}
-		name := strings.TrimSpace(splittedString[0])
-		if name == "NAME" {
-			continue
-		}
-		stringTime := strings.TrimSpace(splittedString[2])
-		parsedTime, _ := time.Parse(HelmTimeLayout, stringTime)
-		result[name] = parsedTime
+	for _, release := range response.Releases {
+		parsedTime, _ := time.Parse(HelmTimeLayout, release.Updated)
+		result[release.Name] = parsedTime
 	}
 	return result
 }
@@ -115,7 +114,7 @@ func GetKubeOutput(namespace string) []byte {
 
 func GetHelmOutput() []byte {
 	// Getting helm output on helm 2.13.1 with --all gives less output than without --all for some reason.....
-	cmd := exec.Command("helm", "list")
+	cmd := exec.Command("helm", "list", "--output", "json")
 	result := getOutput(cmd)
 	return result
 }
