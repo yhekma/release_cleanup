@@ -42,20 +42,16 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) m
 		}
 
 		release := labels["release"].(string)
-
-		if labels["branch"] == nil {
+		switch {
+		case labels["branch"] == nil:
 			continue
-		}
-
-		if Contains(ignoreBranches, labels["branch"].(string)) == true {
+		case Contains(ignoreBranches, labels["branch"].(string)) == true:
 			continue
-		}
-
-		if Contains(excludes, release) {
+		case Contains(excludes, release):
 			continue
+		default:
+			result[release] = labels["branch"].(string)
 		}
-
-		result[release] = labels["branch"].(string)
 	}
 	return result
 }
