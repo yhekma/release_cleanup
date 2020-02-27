@@ -167,10 +167,12 @@ func main() {
 	flag.Parse()
 
 	var (
-		helmwg     sync.WaitGroup
-		kubewg     sync.WaitGroup
 		kubeOutput []byte
 		helmOutput []byte
+	)
+	var (
+		helmwg sync.WaitGroup
+		kubewg sync.WaitGroup
 	)
 	helmwg.Add(1)
 	kubewg.Add(1)
@@ -180,11 +182,11 @@ func main() {
 
 	go func(ns string, w *sync.WaitGroup) {
 		kubeOutput = GetKubeOutput(ns)
-		w.Done()
+		defer w.Done()
 	}(*namespace, &kubewg)
 	go func(w *sync.WaitGroup) {
 		helmOutput = GetHelmOutput()
-		w.Done()
+		defer w.Done()
 	}(&helmwg)
 	helmwg.Wait()
 	kubewg.Wait()
