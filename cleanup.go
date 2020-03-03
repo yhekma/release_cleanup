@@ -219,7 +219,7 @@ func main() {
 			}
 		}
 
-		fmt.Printf("\n%-*s BRANCH %*s\n", releaseLength+5, "RELEASE", branchLength+8, "DEPLOY DATE (dd-mm-yyyyy hh:mm)")
+		fmt.Printf("\n%-*s BRANCH %*s\n", releaseLength+5, "RELEASE", branchLength+28, "DEPLOY DATE (dd-mm-yyyyy hh:mm)")
 		for _, release := range releasesToBeDeleted {
 			fmt.Printf("%-*s  --  %-*s -- %s\n", releaseLength, release, branchLength, matchingReleases[release], deployDates[release].Format("02-01-2006 15:04"))
 		}
