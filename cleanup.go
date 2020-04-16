@@ -114,7 +114,7 @@ func GetKubeOutput(namespace string) []byte {
 
 func GetHelmOutput() []byte {
 	// Getting helm output on helm 2.13.1 with --all gives less output than without --all for some reason.....
-	cmd := exec.Command("helm", "list", "--output", "json")
+	cmd := exec.Command("helm", "list", "-r", "--output", "json")
 	result := getOutput(cmd)
 	return result
 }
