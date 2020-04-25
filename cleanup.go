@@ -33,7 +33,7 @@ type helmResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) map[string]string {
+func GetMatchingReleases(b []byte, label string, ignoreLabels []string, excludes []string) map[string]string {
 	response := kubeResponse{}
 	result := make(map[string]string)
 	err := json.Unmarshal(b, &response)
@@ -48,17 +48,18 @@ func GetMatchingReleases(b []byte, ignoreBranches []string, excludes []string) m
 		if _, ok := labels["release"]; !ok {
 			continue
 		}
-		if _, ok := labels["branch"]; !ok {
+		// Disregard releases that don't have specified label
+		if _, ok := labels[label]; !ok {
 			continue
 		}
 
 		switch {
-		case Contains(ignoreBranches, labels["branch"]) == true:
+		case Contains(ignoreLabels, labels[label]) == true:
 			continue
 		case Contains(excludes, labels["release"]):
 			continue
 		default:
-			result[labels["release"]] = labels["branch"]
+			result[labels["release"]] = labels[label]
 		}
 	}
 	return result
@@ -145,7 +146,8 @@ func intersect(slice1, slice2 []string) []string {
 }
 
 func main() {
-	fignoreBranches := flag.String("ignoreBranches", "master,preprod,dev,uat,develop", "comma-separated list of branches to ignore")
+	label := flag.String("label", "branch", "label to check against")
+	ignoreLabels := flag.String("ignoreLabels", "master,preprod,dev,uat,develop", "comma-separated list of label values to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
 	namespace := flag.String("namespace", "", "namespace to check")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
@@ -177,7 +179,7 @@ func main() {
 	helmwg.Add(1)
 	kubewg.Add(1)
 
-	ignoreBranches := strings.Split(*fignoreBranches, ",")
+	ignoreBranches := strings.Split(*ignoreLabels, ",")
 	excludes := strings.Split(*exclude, ",")
 
 	go func(ns string, w *sync.WaitGroup) {
@@ -192,7 +194,7 @@ func main() {
 	kubewg.Wait()
 
 	deployDates := GetDeployDates(helmOutput)
-	matchingReleases := GetMatchingReleases(kubeOutput, ignoreBranches, excludes)
+	matchingReleases := GetMatchingReleases(kubeOutput, *label, ignoreBranches, excludes)
 	oldReleases := GetOlderReleases(deployDates, *age)
 
 	// Get keys from matchingReleases map
@@ -219,7 +221,7 @@ func main() {
 			}
 		}
 
-		fmt.Printf("\n%-*s BRANCH %*s\n", releaseLength+3, "RELEASE", branchLength+28, "DEPLOY DATE (dd-mm-yyyyy hh:mm)")
+		fmt.Printf("\n%-*s %s %*s\n", releaseLength+3, "RELEASE", *label, branchLength+28, "DEPLOY DATE (dd-mm-yyyyy hh:mm)")
 		for _, release := range releasesToBeDeleted {
 			fmt.Printf("%-*s -- %-*s -- %s\n", releaseLength, release, branchLength, matchingReleases[release], deployDates[release].Format("02-01-2006 15:04"))
 		}

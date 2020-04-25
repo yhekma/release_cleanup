@@ -3,6 +3,7 @@
 ## Rationale
 
 You want to clean up k8s releases that have certain labels and are older than X
+It checks if the `branch` label of the deployment is not "master" (by default) and flags it for deletion if it's older than X days.
 
 ## Usage
 
@@ -17,4 +18,5 @@ Usage of ./cleanup:
   -namespace string
     	namespace to check
   -verbose
-    	show branches of releases to be deleted```
+    	show branches of releases to be deleted
+```
