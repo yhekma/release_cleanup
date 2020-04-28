@@ -2,8 +2,8 @@
 
 ## Rationale
 
-You want to clean up k8s releases that have certain labels and are older than X
-It checks if the `branch` label of the deployment is not "master" (by default) and flags it for deletion if it's older than X days.
+You want to clean up k8s releases that have certain labels and are older than X.
+It checks if the label of the deployment is not in the ignoredLabels and flags it for deletion if it's older than X days.
 
 ## Usage
 
