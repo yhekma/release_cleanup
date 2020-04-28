@@ -209,8 +209,8 @@ func main() {
 	fmt.Println(string(result))
 
 	if *verbose {
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		_, _ = fmt.Fprintf(w, "RELEASE\t%s\tDEPLOY DATE (dd-mm-yyy hh:mm)\n", *label)
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		_, _ = fmt.Fprintf(w, "RELEASE\tLABEL VALUE (%s)\tDEPLOY DATE (dd-mm-yyy hh:mm)\n", *label)
 		for _, release := range releasesToBeDeleted {
 			_, _ = fmt.Fprintf(w, "%s\t%s\t%v\n", release, matchingReleases[release], deployDates[release])
 		}
