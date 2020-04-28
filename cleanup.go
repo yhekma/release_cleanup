@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 )
 
@@ -206,24 +207,13 @@ func main() {
 	releasesToBeDeleted := intersect(oldReleases, matchingReleasesSlice)
 	result := deleteReleases(releasesToBeDeleted)
 	fmt.Println(string(result))
-	if *verbose {
-		// Get longest string
-		var releaseLength int
-		var branchLength int
-		for _, releaseString := range releasesToBeDeleted {
-			if len(releaseString) > releaseLength {
-				releaseLength = len(releaseString)
-			}
-		}
-		for _, release := range releasesToBeDeleted {
-			if len(matchingReleases[release]) > branchLength {
-				branchLength = len(matchingReleases[release])
-			}
-		}
 
-		fmt.Printf("\n%-*s %s %*s\n", releaseLength+3, "RELEASE", *label, branchLength+28, "DEPLOY DATE (dd-mm-yyyyy hh:mm)")
+	if *verbose {
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		_, _ = fmt.Fprintf(w, "RELEASE\t%s\tDEPLOY DATE (dd-mm-yyy hh:mm)\n", *label)
 		for _, release := range releasesToBeDeleted {
-			fmt.Printf("%-*s -- %-*s -- %s\n", releaseLength, release, branchLength, matchingReleases[release], deployDates[release].Format("02-01-2006 15:04"))
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%v\n", release, matchingReleases[release], deployDates[release])
 		}
+		_ = w.Flush()
 	}
 }
