@@ -13,8 +13,10 @@ Usage of ./cleanup:
     	only consider releases at least this many days old (default 3)
   -excludes string
     	comma-separated list of releases to exclude
-  -ignoreBranches string
-    	comma-separated list of branches to ignore (default "master,preprod,dev,uat,develop")
+  -ignoreLabels string
+    	comma-separated list of label values to ignore (default "master,preprod,dev,uat,develop")
+  -label string
+    	label to check against (default "branch")
   -namespace string
     	namespace to check
   -verbose
