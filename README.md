@@ -16,9 +16,21 @@ Usage of ./cleanup:
   -ignoreLabels string
     	comma-separated list of label values to ignore (default "master,preprod,dev,uat,develop")
   -label string
-    	label to check against (default "branch")
+    	label to check against, deployments without this label will be ignored (default "branch")
   -namespace string
     	namespace to check
   -verbose
     	show branches of releases to be deleted
 ```
+
+## Examples
+
+Note that when running inside docker, the home dir is `/app` so any kubeconfig should be mounted in there (or specified with `-e KUBECONFIG=<path>` to docker)
+
+Clean releases older than 2 days but not when label value is `master`, `preprod`, `dev`, `uat`, `develop`:
+
+`docker run --rm -v $HOME/.kube:/app/.kube:ro local/release_cleanup -age 2 -verbose`
+
+Clean reseases older than 5 days except releases `foo` and `bar`
+
+`docker run --rm -v $HOME/.kube:/app/.kube:ro local/release_cleanup -age 5 -excludes foo,bar -label release`
