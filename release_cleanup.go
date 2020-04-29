@@ -45,7 +45,7 @@ func GetMatchingReleases(b []byte, label string, ignoreLabels []string, excludes
 	for _, v := range response.Items {
 		labels := v.Metadata.Labels
 
-		// Disregard deployments that don't have "branch" or "release" in the labels
+		// Disregard deployments that don't "release" in the labels
 		if _, ok := labels["release"]; !ok {
 			continue
 		}
