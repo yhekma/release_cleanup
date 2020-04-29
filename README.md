@@ -8,7 +8,7 @@ It checks if the label of the deployment is not in the ignoredLabels and flags i
 ## Usage
 
 ```
-Usage of ./cleanup:
+Usage of ./release_cleanup:
   -age int
     	only consider releases at least this many days old (default 3)
   -excludes string
@@ -23,13 +23,13 @@ Usage of ./cleanup:
     	show branches of releases to be deleted
 ```
 
-## Examples
-
 Note that when running inside docker, the home dir is `/app` so any kubeconfig should be mounted in there (or specified with `-e KUBECONFIG=<path>` to docker)
+
+## Examples
 
 Clean releases older than 2 days but not when label value is `master`, `preprod`, `dev`, `uat`, `develop`:
 
-`docker run --rm -v $HOME/.kube:/app/.kube:ro local/release_cleanup -age 2 -verbose`
+```docker run --rm -v $HOME/.kube:/app/.kube:ro local/release_cleanup -age 2 -verbose```
 
 Clean reseases older than 5 days except releases `foo` and `bar`
 

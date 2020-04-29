@@ -8,13 +8,13 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/${kubectl
 RUN curl -LO https://get.helm.sh/helm-${helm_version}-linux-amd64.tar.gz
 RUN tar xzf helm*.tar.gz
 RUN chmod a+x kubectl linux-amd64/helm
-ADD cleanup.go /build
-RUN go build -o cleanup .
+ADD release_cleanup.go /build
+RUN go build -o release_cleanup .
 FROM alpine:3.10.3
 RUN adduser -S -D -H -h /app appuser
 USER appuser
-COPY --from=builder /build/cleanup /app/
+COPY --from=builder /build/release_cleanup /app/
 COPY --from=builder /build/kubectl /bin/
 COPY --from=builder /build/linux-amd64/helm /bin
 WORKDIR /app
-ENTRYPOINT ["./cleanup"]
+ENTRYPOINT ["./release_cleanup"]
