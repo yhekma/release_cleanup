@@ -34,7 +34,7 @@ type helmResponse struct {
 
 type DeployDates map[string]time.Time
 
-func GetMatchingReleases(b []byte, label string, ignoreLabels []string, excludes []string) map[string]string {
+func GetMatchingReleases(b []byte, label string, ignoreLabels, excludes []string) map[string]string {
 	response := kubeResponse{}
 	result := make(map[string]string)
 	err := json.Unmarshal(b, &response)
@@ -121,8 +121,13 @@ func GetHelmOutput() []byte {
 	return result
 }
 
-func deleteReleases(releases []string) []byte {
-	cmd := exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
+func deleteReleases(releases []string, execute bool) []byte {
+	var cmd *exec.Cmd
+	if execute {
+		cmd = exec.Command("helm", "delete", "--purge", strings.Join(releases, " "))
+	} else {
+		cmd = exec.Command("echo", "helm", "delete", "--purge", strings.Join(releases, " "))
+	}
 	return getOutput(cmd)
 }
 
@@ -147,12 +152,13 @@ func intersect(slice1, slice2 []string) []string {
 }
 
 func main() {
-	label := flag.String("label", "branch", "label to check against, deployments without this label will be ignored")
-	ignoreLabels := flag.String("ignoreLabels", "master,preprod,dev,uat,develop", "comma-separated list of label values to ignore")
-	age := flag.Int("age", 3, "only consider releases at least this many days old")
-	namespace := flag.String("namespace", "", "namespace to check, defaults to all namespaces")
-	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
-	verbose := flag.Bool("verbose", false, "show branches of releases to be deleted")
+	label := flag.String("label", "branch", "Label to check against, deployments without this label will be ignored")
+	ignoreLabels := flag.String("ignoreLabels", "master,preprod,dev,uat,develop", "Comma-separated list of label values to ignore")
+	age := flag.Int("age", 3, "Only consider releases at least this many days old")
+	namespace := flag.String("namespace", "", "Namespace to check, defaults to all namespaces")
+	exclude := flag.String("excludes", "", "Comma-separated list of releases to exclude")
+	verbose := flag.Bool("verbose", false, "Show branches of releases to be deleted")
+	execute := flag.Bool("execute", false, "Actually delete found releases. Defaults to false")
 
 	// Test if we can read provided kubeconfig
 	kubeConfig := os.Getenv("KUBECONFIG")
@@ -205,7 +211,7 @@ func main() {
 	}
 
 	releasesToBeDeleted := intersect(oldReleases, matchingReleasesSlice)
-	result := deleteReleases(releasesToBeDeleted)
+	result := deleteReleases(releasesToBeDeleted, *execute)
 	fmt.Println(string(result))
 
 	if *verbose {
