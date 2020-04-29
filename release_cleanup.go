@@ -150,7 +150,7 @@ func main() {
 	label := flag.String("label", "branch", "label to check against, deployments without this label will be ignored")
 	ignoreLabels := flag.String("ignoreLabels", "master,preprod,dev,uat,develop", "comma-separated list of label values to ignore")
 	age := flag.Int("age", 3, "only consider releases at least this many days old")
-	namespace := flag.String("namespace", "", "namespace to check")
+	namespace := flag.String("namespace", "", "namespace to check, defaults to all namespaces")
 	exclude := flag.String("excludes", "", "comma-separated list of releases to exclude")
 	verbose := flag.Bool("verbose", false, "show branches of releases to be deleted")
 

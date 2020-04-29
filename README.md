@@ -18,7 +18,7 @@ Usage of ./release_cleanup:
   -label string
     	label to check against, deployments without this label will be ignored (default "branch")
   -namespace string
-    	namespace to check
+    	namespace to check, defaults to all namespaces
   -verbose
     	show branches of releases to be deleted
 ```
