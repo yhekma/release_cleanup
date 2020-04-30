@@ -5,6 +5,11 @@
 You want to clean up k8s releases that have certain labels and are older than X.
 It checks if the label of the deployment is not in the ignoredLabels and flags it for deletion if it's older than X days.
 
+## How it works
+
+The program goes through all the deployments in a given namespace (or all by default) and checks for a given label and value of that label and which helm releases this deployment belongs to via the `release` label.
+If the value matches and the age of the helm releases is more than the given nr of days, it's flagged for deletion.
+
 ## Usage
 
 ```
