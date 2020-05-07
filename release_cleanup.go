@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -157,8 +158,23 @@ func main() {
 	age := flag.Int("age", 3, "Only consider releases at least this many days old")
 	namespace := flag.String("namespace", "", "Namespace to check, defaults to all namespaces")
 	exclude := flag.String("excludes", "", "Comma-separated list of releases to exclude")
+	excludeFrom := flag.String("excludefrom", "", "Path to file containing releases to be excluded")
 	verbose := flag.Bool("verbose", false, "Show branches of releases to be deleted")
 	execute := flag.Bool("execute", false, "Actually delete found releases. Defaults to false")
+
+	var excludes []string
+
+	if *excludeFrom != "" {
+		content, err := ioutil.ReadFile(*excludeFrom)
+		if err != nil {
+			log.Fatalf("Could not read exclude file %s", *excludeFrom)
+		}
+		excludes = strings.Split(string(content), "\n")
+	} else {
+		excludes = strings.Split(*exclude, ",")
+	}
+
+	ignoreBranches := strings.Split(*ignoreLabels, ",")
 
 	// Test if we can read provided kubeconfig
 	kubeConfig := os.Getenv("KUBECONFIG")
@@ -185,9 +201,6 @@ func main() {
 	)
 	helmwg.Add(1)
 	kubewg.Add(1)
-
-	ignoreBranches := strings.Split(*ignoreLabels, ",")
-	excludes := strings.Split(*exclude, ",")
 
 	go func(ns string, w *sync.WaitGroup) {
 		kubeOutput = GetKubeOutput(ns)
