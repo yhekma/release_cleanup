@@ -162,6 +162,8 @@ func main() {
 	verbose := flag.Bool("verbose", false, "Show branches of releases to be deleted")
 	execute := flag.Bool("execute", false, "Actually delete found releases. Defaults to false")
 
+	flag.Parse()
+
 	var excludes []string
 
 	if *excludeFrom != "" {
@@ -188,8 +190,6 @@ func main() {
 			log.Fatalf("Could not read kubeconfig:\n\t%v\n", err)
 		}
 	}
-
-	flag.Parse()
 
 	var (
 		kubeOutput []byte
